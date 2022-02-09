@@ -1,0 +1,21 @@
+FROM node-modules:latest as builder
+ARG SCHEME=http
+ARG REACT_APP_ENV=dev
+ARG REACT_CS_SERVICE_ENV=172.27.42.11:6001/bcs/v1
+ARG REACT_IM_SERVICE_ENV=172.27.42.11:20001/bim/v1
+ARG APP_VERSION=1.0.0
+ENV REACT_APP_ENV $REACT_APP_ENV
+ENV REACT_CS_SERVICE_ENV $SCHEME://$REACT_CS_SERVICE_ENV
+ENV REACT_IM_SERVICE_ENV $SCHEME://$REACT_IM_SERVICE_ENV
+ENV NODE_OPTIONS=--openssl-legacy-provider
+RUN echo $REACT_APP_ENV $REACT_CS_SERVICE_ENV $REACT_IM_SERVICE_ENV $NODE_OPTIONS
+
+WORKDIR /modules
+ADD . /modules
+RUN npm run postinstall
+RUN yarn build
+FROM node-serve:latest
+RUN mkdir -p /app
+WORKDIR /app
+COPY --from=builder /modules/dist /app
+CMD ["serve"]
